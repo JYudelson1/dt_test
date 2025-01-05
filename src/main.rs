@@ -4,17 +4,14 @@
 mod game;
 mod traits;
 
-use decision_transformer_dfdx::{DTModelConfig, DTState, GetOfflineData};
+use decision_transformer_dfdx::{DTState, GetOfflineData};
 use dfdx::{
-    nn::{modules::Linear, DeviceBuildExt, Module, ModuleMut, ZeroGrads},
-    optim::{Adam, AdamConfig, Optimizer, Sgd, SgdConfig, WeightDecay},
-    prelude::{bce_with_logits, MeanTo, SelectTo, TryStack},
-    tensor::{AsArray, Cpu, TensorFrom, Trace},
-    tensor_ops::Backward,
+    nn::DeviceBuildExt,
+    optim::{Adam, AdamConfig},
+    tensor::Cpu,
 };
 use game::Game;
 use rand::SeedableRng;
-use traits::TestConfig;
 
 fn main() {
     let mut model = Game::build_model();
