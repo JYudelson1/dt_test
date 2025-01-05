@@ -16,9 +16,6 @@ use rand::SeedableRng;
 fn main() {
     let mut model = Game::build_model();
 
-    //let mut simple_model =
-    Cpu::default().build_module::<dfdx::nn::builders::Linear<1, { Game::ACTION_SIZE }>, f32>();
-
     let adam_config = AdamConfig {
         lr: 1e-4,
         //weight_decay: Some(WeightDecay::L2(1e-3)),
@@ -28,40 +25,16 @@ fn main() {
     let mut optimizer = Adam::new(&model.0, adam_config);
 
     let temp = 0.5;
-    //let mut grads = simple_model.alloc_grads();
 
     let mut rng = rand::prelude::StdRng::from_seed([42; 32]);
-    for i in 0..2_i32.pow(12) {
+    for i in 0..2_i32.pow(10) {
         let (batch, actions) = Game::get_batch::<16, _>(&mut rng, None);
-
-        // println!("S: {:?}", batch.clone().0.array());
-        // println!("A: {:?}", batch.clone().1.array());
-        // println!("R: {:?}", batch.clone().2.array());
-        // println!("T: {:?}", batch.clone().3.array());
 
         let mut prev_loss = f32::MAX;
         for epoch in 0..1 {
             let b = batch.clone();
             let loss = model.train_on_batch(b, actions, &mut optimizer);
 
-            // let rtg = batch
-            //     .2
-            //     .clone()
-            //     .select(Cpu::default().tensor([{ TestConfig::SEQ_LEN - 1 }; 64]));
-            // println!("{:?}", rtg.array());
-            // let out = simple_model.forward_mut(rtg.traced(grads));
-            // println!("{:?}", out.array());
-            // let actual = actions
-            //     .map(|action| Game::action_to_tensor(&action))
-            //     .stack();
-            // println!("{:?}", actual.array());
-
-            // let g_loss = bce_with_logits(out, actual).mean();
-            // let loss = g_loss.as_vec()[0];
-            // grads = g_loss.backward();
-
-            // optimizer.update(&mut simple_model, &grads).unwrap();
-            // simple_model.zero_grads(&mut grads);
             println!("Loss at batch {i} epoch {epoch}: {loss:.3} (offline learn)\r");
 
             //Early stopping
@@ -73,6 +46,10 @@ fn main() {
         }
 
         if (i - 1) % 128 == 0 {
+            // Evaluate the model, varying the desired_reward parameter
+            // This reflects the cumulative reward the decision transformer should seek to achieve
+            // In our case, since each "point" is one point of reward, the desired_reward should simply equal the number of times the model should to gain a point
+
             let s = model.evaluate(Game::new(), temp, 0.0, false);
             println!("Achieved {}/0 points", s.points);
 
